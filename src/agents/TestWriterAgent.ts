@@ -1,13 +1,16 @@
+import { DatabaseManager } from '../database/DatabaseManager.js';
 import { BaseAgent, AgentConfig, AgentMessage } from './BaseAgent.js';
-import { Mistral } from '@mistralai/mistralai';
+const { Mistral } = require('@mistralai/mistralai');
 import { v4 as uuid } from 'uuid';
 
 export class TestWriterAgent extends BaseAgent {
+  private dbManager: DatabaseManager;
 
-  private mistral!: Mistral;
+  private mistral: any;
 
   constructor(config: AgentConfig) {
-    super(config);
+  super(config);
+  this.dbManager = new DatabaseManager(process.env.DATABASE_PATH || './data/sqlite/framework.db');
   }
 
   async start(): Promise<void> {
@@ -33,7 +36,8 @@ export class TestWriterAgent extends BaseAgent {
   }
 
   private async handleGenerateTest(message: AgentMessage): Promise<void> {
-    const { url, testType, description } = message.payload;
+  const { url, testType, description } = message.payload;
+  console.log('TestWriterAgent: Received GENERATE_TEST message:', { url, testType, description });
   
     try {
       console.log(`Generating ${testType} test for: ${url}`);
@@ -52,10 +56,23 @@ export class TestWriterAgent extends BaseAgent {
         createdAt: new Date()
       };
 
-      // Store test case
+      // Store test case in Redis
       await this.storeData(`testcase:${testCase.id}`, testCase);
+      console.log('TestWriterAgent: Stored test case in Redis:', testCase.id);
+
+      // Store test case in test_cases table using DatabaseManager
+      this.dbManager.createTestCase({
+        id: testCase.id,
+        name: testCase.name,
+        description: testCase.description,
+        type: testCase.type,
+        targetUrl: testCase.targetUrl,
+        playwrightCode: testCase.playwrightCode
+      });
+      console.log('TestWriterAgent: Stored test case in SQLite:', testCase.id);
 
       // Log test generation event
+      console.log('TestWriterAgent: Sending LOG message to logger_1');
       await this.sendMessage('logger_1', 'LOG', {
         level: 'info',
         message: `Test generated for ${url} (${testType})`,
@@ -63,21 +80,24 @@ export class TestWriterAgent extends BaseAgent {
       });
 
       // Send response back
+      console.log('TestWriterAgent: Sending TEST_GENERATED message to', message.source);
       await this.sendMessage(message.source, 'TEST_GENERATED', {
         testCase,
         success: true
       });
 
     } catch (error) {
-      console.error('Error generating test:', error);
+  console.error('TestWriterAgent: Error generating test:', error);
 
       // Log test generation failure
+      console.log('TestWriterAgent: Sending LOG error message to logger_1');
       await this.sendMessage('logger_1', 'LOG', {
         level: 'error',
         message: `Test generation failed for ${url} (${testType})`,
         data: { error: (error instanceof Error ? error.message : String(error)), url, testType, description }
       });
 
+      console.log('TestWriterAgent: Sending TEST_GENERATION_FAILED message to', message.source);
       await this.sendMessage(message.source, 'TEST_GENERATION_FAILED', {
         error: (error instanceof Error ? error.message : String(error)),
         success: false

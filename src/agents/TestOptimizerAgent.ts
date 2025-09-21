@@ -11,6 +11,7 @@ export class TestOptimizerAgent extends BaseAgent {
 
   // Handles incoming messages and routes them to processMessage
   protected async handleMessage(message: Message): Promise<void> {
+  console.log('TestOptimizerAgent: Received message:', message);
     await this.processMessage(message);
   }
 
@@ -40,6 +41,7 @@ export class TestOptimizerAgent extends BaseAgent {
   }
 
   private async handleOptimizeTest(message: Message): Promise<void> {
+  console.log('TestOptimizerAgent: Handling OPTIMIZE_TEST for script:', message.payload?.testScript);
     // Example: Analyze the test script and provide suggestions
     const testScript = message.payload?.testScript || '';
     const suggestions: string[] = [];

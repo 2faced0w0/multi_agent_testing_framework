@@ -1,9 +1,9 @@
-import fs from 'fs';
-import Database from 'better-sqlite3';
-import path from 'path';
+const fs = require('fs');
+const Database = require('better-sqlite3');
+const path = require('path');
 
 export class DatabaseManager {
-  private db: Database.Database;
+  private db: any;
 
   constructor(dbPath: string) {
     // Ensure directory exists

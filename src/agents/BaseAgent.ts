@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+const Redis = require('ioredis');
 export interface Agent {
   start(): Promise<void>;
   stop(): Promise<void>;
@@ -38,19 +38,19 @@ export abstract class BaseAgent implements Agent {
     const sub = new Redis(redisUrl);
 
     // Subscribe to this agent's channel
-    sub.subscribe(this.config.id, (err) => {
+    sub.subscribe(this.config.id, (err: Error | null, count?: number) => {
       if (err) {
-        console.error(`Failed to subscribe to channel ${this.config.id}:`, err);
+      console.error(`Failed to subscribe to channel ${this.config.id}:`, err);
       }
     });
 
     // Listen for messages and route to processMessage
-    sub.on('message', async (channel, message) => {
+    sub.on('message', async (channel: string, message: string) => {
       try {
-        const parsed = JSON.parse(message);
-        await this.processMessage(parsed);
-      } catch (err) {
-        console.error('Error processing incoming message:', err);
+      const parsed: AgentMessage = JSON.parse(message);
+      await this.processMessage(parsed);
+      } catch (err: unknown) {
+      console.error('Error processing incoming message:', err);
       }
     });
 

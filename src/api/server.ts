@@ -1,17 +1,18 @@
+import { Redis } from 'ioredis';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
 import { DatabaseManager } from '../database/DatabaseManager.js';
-import Redis from 'ioredis';
+import type { Redis as RedisType } from 'ioredis';
 import { v4 as uuid } from 'uuid';
 
 export class APIServer {
   private app: express.Application;
-  private db: DatabaseManager;
-  private redis: Redis;
+  private redis: RedisType;
   private port: number;
+  private db: DatabaseManager;
 
   constructor(port: number = 3000) {
     this.app = express();
