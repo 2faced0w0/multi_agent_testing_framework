@@ -1,24 +1,35 @@
-import { BaseAgent, AgentConfig } from './BaseAgent.js';
-import { AgentMessage } from '../types/index.js';
+import { BaseAgent, AgentConfig, AgentMessage } from './BaseAgent.js';
+import { AgentMessage as TypesAgentMessage } from '../types/index.js';
+
+// Use the imported AgentMessage from types/index.js to avoid duplicate import
+type Message = TypesAgentMessage;
 
 export class TestOptimizerAgent extends BaseAgent {
   constructor(config: AgentConfig) {
     super(config);
   }
-  
+
+  // Handles incoming messages and routes them to processMessage
+  protected async handleMessage(message: Message): Promise<void> {
+    await this.processMessage(message);
+  }
+
   async start(): Promise<void> {
     await super.start();
+    await this.initialize();
   }
 
   async stop(): Promise<void> {
+    await this.cleanup();
     await super.stop();
   }
-  
+
   protected async initialize(): Promise<void> {
     console.log('Test Optimizer initialized');
+    // You could load optimization rules or models here
   }
 
-  protected async processMessage(message: AgentMessage): Promise<void> {
+  public async processMessage(message: Message): Promise<void> {
     switch (message.type) {
       case 'OPTIMIZE_TEST':
         await this.handleOptimizeTest(message);
@@ -28,21 +39,33 @@ export class TestOptimizerAgent extends BaseAgent {
     }
   }
 
-  private async handleOptimizeTest(message: AgentMessage): Promise<void> {
-    // Simple optimization logic for demo
-    console.log('Test optimization requested - feature coming soon!');
-  
+  private async handleOptimizeTest(message: Message): Promise<void> {
+    // Example: Analyze the test script and provide suggestions
+    const testScript = message.payload?.testScript || '';
+    const suggestions: string[] = [];
+
+    if (!testScript) {
+      suggestions.push('No test script provided.');
+    } else {
+      if (!testScript.includes('waitFor')) {
+        suggestions.push('Add explicit waits for dynamic content.');
+      }
+      if (!testScript.includes('catch')) {
+        suggestions.push('Include error handling for network timeouts.');
+      }
+      if (testScript.match(/selector/g)?.length < 2) {
+        suggestions.push('Consider adding more specific selectors.');
+      }
+    }
+
     await this.sendMessage(message.source, 'OPTIMIZATION_COMPLETE', {
       message: 'Optimization analysis complete',
-      suggestions: [
-        'Consider adding more specific selectors',
-        'Add explicit waits for dynamic content',
-        'Include error handling for network timeouts'
-      ]
+      suggestions,
     });
   }
 
   protected async cleanup(): Promise<void> {
     // Cleanup resources if needed
+    console.log('Test Optimizer cleanup complete');
   }
 }
