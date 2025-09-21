@@ -48,7 +48,7 @@ export class TestExecutorAgent extends BaseAgent {
     });
   }
 
-  protected async processMessage(message: AgentMessageType): Promise<void> {
+  public async processMessage(message: AgentMessageType): Promise<void> {
     switch (message.type) {
       case 'EXECUTE_TEST':
         await this.handleExecuteTest(message);
@@ -74,9 +74,9 @@ export class TestExecutorAgent extends BaseAgent {
         testCaseId,
         status: 'running',
         startTime: new Date(),
-        endTime: null,
+        endTime: null as Date | null,
         result: undefined,
-        artifacts: []
+        artifacts: [] as string[]
       };
 
       await this.storeData(`execution:${execution.id}`, execution);
