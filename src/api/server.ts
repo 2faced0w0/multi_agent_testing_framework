@@ -66,9 +66,15 @@ export class APIServer {
 
         await this.redis.lpush('queue:test_writer', JSON.stringify(message));
 
-        res.json({ 
+        res.json({
           message: 'Test generation started',
-          messageId: message.id
+          messageId: message.id,
+          url,
+          testType,
+          description,
+          timestamp: message.timestamp,
+          status: 'pending',
+          statusEndpoint: `/api/v1/tests/generate/status/${message.id}`
         });
 
       } catch (error) {
@@ -76,6 +82,27 @@ export class APIServer {
         res.status(500).json({ error: 'Internal server error' });
       }
     });
+    
+      // Test Generation Status API
+      this.app.get('/api/v1/tests/generate/status/:id', async (req, res) => {
+        try {
+          const testCase = this.db.getTestCase(req.params.id);
+          if (testCase) {
+            return res.json({
+              status: 'completed',
+              testCase
+            });
+          } else {
+            return res.json({
+              status: 'pending',
+              testCase: null
+            });
+          }
+        } catch (error) {
+          console.error('Error checking test generation status:', error);
+          res.status(500).json({ error: 'Internal server error' });
+        }
+      });
 
     this.app.post('/api/v1/tests/execute', async (req, res) => {
       try {

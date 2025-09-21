@@ -1,4 +1,4 @@
-const Redis = require('ioredis');
+import { Redis } from 'ioredis';
 export interface Agent {
   start(): Promise<void>;
   stop(): Promise<void>;
@@ -38,11 +38,13 @@ export abstract class BaseAgent implements Agent {
     const sub = new Redis(redisUrl);
 
     // Subscribe to this agent's channel
-    sub.subscribe(this.config.id, (err: Error | null, count?: number) => {
-      if (err) {
-      console.error(`Failed to subscribe to channel ${this.config.id}:`, err);
-      }
-    });
+    sub.subscribe(this.config.id)
+  .then((count) => {
+        // Successfully subscribed
+      })
+      .catch((err: Error) => {
+        console.error(`Failed to subscribe to channel ${this.config.id}:`, err);
+      });
 
     // Listen for messages and route to processMessage
     sub.on('message', async (channel: string, message: string) => {
