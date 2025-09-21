@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Testing Framework</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .btn {
+            background: #3498db;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #2980b9;
+        }
+
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: #27ae60;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+
+        .status.error {
+            background: #fdeaea;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
+        .status.info {
+            background: #ebf3fd;
+            color: #3498db;
+            border: 1px solid #3498db;
+        }
+
+        .test-list {
+            margin-top: 20px;
+        }
+
+        .test-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .test-item h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .test-item p {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .test-item .meta {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .system-status {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.online {
+            background: #27ae60;
+        }
+
+        .status-indicator.offline {
+            background: #e74c3c;
+        }
+    </style>
+</head>
+
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Multi-Agent Testing Framework</h1>
+            <p>AI-Powered Web Application Testing</p>
+        </div>
+
+        <div class="system-status">
+            <div>
+                <span class="status-indicator" id="systemStatus"></span>
+                <span id="systemStatusText">Checking system status...</span>
+            </div>
+            <button class="btn" id="refreshStatusBtn">Refresh Status</button>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>🎯 Generate New Test</h2>
+                <form id="generateTestForm">
+                    <div class="form-group">
+                        <label for="testUrl">Website URL</label>
+                        <input type="url" id="testUrl" name="url" placeholder="https://example.com" required>
+                    </div>
+                  
+                    <div class="form-group">
+                        <label for="testType">Test Type</label>
+                        <select id="testType" name="testType" required>
+                            <option value="">Select test type...</option>
+                            <option value="functional">Functional Testing</option>
+                            <option value="accessibility">Accessibility Testing</option>
+                            <option value="performance">Performance Testing</option>
+                        </select>
+                    </div>
+                  
+                    <div class="form-group">
+                        <label for="testDescription">Description (Optional)</label>
+                        <textarea id="testDescription" name="description" rows="3" placeholder="Describe what you want to test..."></textarea>
+                    </div>
+                  
+                    <button type="submit" class="btn" id="generateBtn">
+                        Generate Test
+                    </button>
+                </form>
+              
+                <div id="generateStatus"></div>
+            </div>
+
+            <div class="card">
+                <h2>📋 Test Cases</h2>
+                <button class="btn" id="refreshTestCasesBtn">Refresh Test Cases</button>
+                <div id="testCasesList" class="test-list">
+                    <p>Loading test cases...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>🚀 Quick Demo</h2>
+            <p>Test a sample MERN stack application to see the framework in action:</p>
+            <div style="margin-top: 20px;">
+                <button class="btn btn-success" id="runDemoBtn">
+                    Run Demo Test
+                </button>
+                <div id="demoStatus"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
