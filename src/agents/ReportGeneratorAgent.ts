@@ -1,15 +1,29 @@
-import { BaseAgent, AgentConfig } from './BaseAgent.js';
-import { AgentMessage } from '../types/index.js';
+import { BaseAgent, AgentConfig, AgentMessage } from './BaseAgent.js';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import path from 'path';
 
 export class ReportGeneratorAgent extends BaseAgent {
+  // Called when the agent is initialized
   protected async initialize(): Promise<void> {
-    // Initialize report generator
+    // Ensure the reports directory exists
+    const reportsDir = path.join(process.cwd(), 'data', 'artifacts', 'reports');
+    fs.mkdirSync(reportsDir, { recursive: true });
+    console.log('ReportGeneratorAgent initialized.');
   }
 
-  protected async processMessage(message: AgentMessage): Promise<void> {
+  // Handles incoming messages and routes them to processMessage
+  protected async handleMessage(message: AgentMessage): Promise<void> {
+    await this.processMessage(message);
+  }
+
+  // Cleans up resources (if any)
+  protected async cleanup(): Promise<void> {
+    // No resources to clean up for now
+    console.log('ReportGeneratorAgent cleanup complete.');
+  }
+
+  public async processMessage(message: AgentMessage): Promise<void> {
     switch (message.type) {
       case 'GENERATE_REPORT':
         await this.handleGenerateReport(message);
@@ -21,10 +35,10 @@ export class ReportGeneratorAgent extends BaseAgent {
 
   private async handleGenerateReport(message: AgentMessage): Promise<void> {
     const { executionId } = message.payload;
-  
+
     try {
       console.log(`Generating report for execution: ${executionId}`);
-    
+
       // Get execution data
       const execution = await this.getData(`execution:${executionId}`);
       if (!execution) {
@@ -33,13 +47,13 @@ export class ReportGeneratorAgent extends BaseAgent {
 
       // Get test case data
       const testCase = await this.getData(`testcase:${execution.testCaseId}`);
-    
+
       // Generate HTML report
       const reportHtml = this.generateHtmlReport(execution, testCase);
-    
+
       // Save report
       const reportPath = await this.saveReport(execution.id, reportHtml);
-    
+
       // Store report metadata
       const report = {
         id: uuid(),
@@ -61,7 +75,7 @@ export class ReportGeneratorAgent extends BaseAgent {
   private generateHtmlReport(execution: any, testCase: any): string {
     const status = execution.status === 'passed' ? 'PASSED' : 'FAILED';
     const statusColor = execution.status === 'passed' ? 'green' : 'red';
-  
+
     return `
 <!DOCTYPE html>
 <html>
@@ -115,19 +129,15 @@ export class ReportGeneratorAgent extends BaseAgent {
 
   private async saveReport(executionId: string, html: string): Promise<string> {
     const reportsDir = path.join(process.cwd(), 'data', 'artifacts', 'reports');
-  
+
     // Ensure directory exists
     fs.mkdirSync(reportsDir, { recursive: true });
-  
+
     const filename = `report_${executionId}_${Date.now()}.html`;
     const filepath = path.join(reportsDir, filename);
-  
-    fs.writeFileSync(filepath, html);
-  
-    return filepath;
-  }
 
-  protected async cleanup(): Promise<void> {
-    // Cleanup resources if needed
+    fs.writeFileSync(filepath, html);
+
+    return filepath;
   }
 }
