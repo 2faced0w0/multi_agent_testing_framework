@@ -4,15 +4,15 @@ import { chromium, Browser, Page } from 'playwright';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import path from 'path';
-import Redis from 'ioredis';
+import { createClient } from 'redis';
 
 export class TestExecutorAgent extends BaseAgent {
   private browser: Browser | null = null;
-  public redis: any;
+  // Uses redis (command client) from BaseAgent
 
   constructor(config: AgentConfig) {
-  super(config);
-  this.redis = new (Redis as any)(process.env.REDIS_URL || 'redis://localhost:6379');
+    super(config);
+  // Redis command client is initialized in BaseAgent
   }
 
   // Handles incoming messages and delegates to processMessage
@@ -217,9 +217,9 @@ export class TestExecutorAgent extends BaseAgent {
   private async pollQueue(): Promise<void> {
     while (true) {
       try {
-        const data = await this.redis.brpop('queue:test_executor', 0);
-        if (data && data[1]) {
-          const message = JSON.parse(data[1]);
+        const result = await this.redis.sendCommand(['BRPOP', 'queue:test_executor', '0']);
+        if (result && result.length === 2) {
+          const message = JSON.parse(result[1]);
           await this.handleMessage(message);
         }
       } catch (err) {

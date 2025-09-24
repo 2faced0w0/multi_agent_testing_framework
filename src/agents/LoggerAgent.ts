@@ -2,31 +2,28 @@ import { BaseAgent } from './BaseAgent.js';
 import { AgentMessage } from '../types/index.js';
 import fs from 'fs';
 import path from 'path';
-import { Redis } from 'ioredis';
+import { createClient } from 'redis';
 
 export class LoggerAgent extends BaseAgent {
   private logFile!: string;
-  public redis: any;
+  // Uses redis (command client) from BaseAgent
 
   constructor(config: any) {
-    super(config);
-  this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-    console.log('LoggerAgent: Constructor called');
+  super(config);
+  console.log('LoggerAgent: Constructor called');
   }
 
   protected async initialize(): Promise<void> {
-  console.log('LoggerAgent: Initializing...');
+    console.log('LoggerAgent: Initializing...');
     this.logFile = path.join(process.cwd(), 'data', 'logs', 'system.log');
-  
     // Ensure log directory exists
     fs.mkdirSync(path.dirname(this.logFile), { recursive: true });
-  console.log('LoggerAgent: Log directory ensured at', path.dirname(this.logFile));
-  
+    console.log('LoggerAgent: Log directory ensured at', path.dirname(this.logFile));
     console.log('Logger initialized');
   }
 
   protected async handleMessage(message: AgentMessage): Promise<void> {
-  console.log('LoggerAgent: Received message:', message);
+    console.log('LoggerAgent: Received message:', message);
     switch (message.type) {
       case 'LOG':
         await this.handleLog(message);
@@ -38,9 +35,7 @@ export class LoggerAgent extends BaseAgent {
 
   private async handleLog(message: AgentMessage): Promise<void> {
     const { level, message: logMessage, data } = message.payload;
-
     console.log('LoggerAgent: Received LOG message:', { level, logMessage, data });
-
     const logEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -48,7 +43,6 @@ export class LoggerAgent extends BaseAgent {
       source: message.source,
       data
     };
-
     // Write to system log file
     try {
       fs.appendFileSync(this.logFile, JSON.stringify(logEntry) + '\n');
@@ -56,15 +50,13 @@ export class LoggerAgent extends BaseAgent {
     } catch (err) {
       console.error('LoggerAgent: Error writing log entry:', err);
     }
-
     // Write to Redis
     try {
-      await this.redis.lpush('logs:system', JSON.stringify(logEntry));
-      console.log('LoggerAgent: Log entry written to Redis.');
+        await this.redis.sendCommand(['LPUSH', 'logs:system', JSON.stringify(logEntry)]);
+        console.log('LoggerAgent: Log entry written to Redis.');
     } catch (err) {
       console.error('LoggerAgent: Error writing log entry to Redis:', err);
     }
-
     // Also log to console for development
     console.log(`[${level.toUpperCase()}] ${message.source}: ${logMessage}`);
   }
@@ -72,7 +64,7 @@ export class LoggerAgent extends BaseAgent {
   protected async cleanup(): Promise<void> {
     // Cleanup resources if needed
     if (this.redis) {
-      await this.redis.disconnect();
+      await this.redis.quit();
     }
   }
 }

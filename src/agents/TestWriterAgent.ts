@@ -2,20 +2,21 @@ import { DatabaseManager } from '../database/DatabaseManager.js';
 import { BaseAgent, AgentConfig, AgentMessage } from './BaseAgent.js';
 import { Mistral } from '@mistralai/mistralai';
 import { v4 as uuid } from 'uuid';
-import Redis from 'ioredis';
+import { createClient } from 'redis';
 
 export class TestWriterAgent extends BaseAgent {
   private dbManager: DatabaseManager;
   private mistral: any;
-  protected redis: any;
+  // Uses redis (command client) from BaseAgent
 
   constructor(config: AgentConfig) {
-  super(config);
-  this.dbManager = new DatabaseManager(process.env.DATABASE_PATH || './data/sqlite/framework.db');
-  this.redis = new (Redis as any)(process.env.REDIS_URL || 'redis://localhost:6379');
+    super(config);
+    this.dbManager = new DatabaseManager(process.env.DATABASE_PATH || './data/sqlite/framework.db');
+  // Redis command client is initialized in BaseAgent
   }
 
   async start(): Promise<void> {
+    await this.initialize();
     await super.start();
     this.pollQueue();
   }
@@ -23,16 +24,16 @@ export class TestWriterAgent extends BaseAgent {
   // Poll Redis queue:test_writer for new messages
   private async pollQueue(): Promise<void> {
     while (true) {
-      try {
-        const data = await this.redis.brpop('queue:test_writer', 0);
-        if (data && data[1]) {
-          const message = JSON.parse(data[1]);
-          await this.handleMessage(message);
+        try {
+            const result = await this.redis.sendCommand(['BRPOP', 'queue:test_writer', '0']);
+            if (result && result.length === 2) {
+                const message = JSON.parse(result[1]);
+                await this.handleMessage(message);
+            }
+        } catch (err) {
+            console.error('[TestWriterAgent] Error polling Redis queue:', err);
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
-      } catch (err) {
-        console.error('[TestWriterAgent] Error polling Redis queue:', err);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
     }
   }
 
@@ -237,12 +238,12 @@ export class TestWriterAgent extends BaseAgent {
   }
 
   private buildPrompt(url: string, testType: string, description: string): string {
-    const basePrompt = `Generate a Playwright test for the website: ${url}
+  const basePrompt = `Generate a Playwright test for the website: ${url}
 Test Type: ${testType}
 Description: ${description}
 
 Requirements:
--Only generate working code without extra instructions and labels
+- Only generate working code without extra instructions and labels
 - Use TypeScript
 - Include proper imports
 - Add meaningful assertions

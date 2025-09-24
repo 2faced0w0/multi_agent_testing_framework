@@ -1,16 +1,15 @@
-import { Redis } from 'ioredis';
+import { createClient } from 'redis';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
 import { DatabaseManager } from '../database/DatabaseManager.js';
-import type { Redis as RedisType } from 'ioredis';
 import { v4 as uuid } from 'uuid';
 
 export class APIServer {
   private app: express.Application;
-  private redis: RedisType;
+  private redis: any;
   private port: number;
   private db: DatabaseManager;
 
@@ -18,8 +17,8 @@ export class APIServer {
     this.app = express();
     this.port = port;
     this.db = new DatabaseManager(process.env.DATABASE_PATH || './data/sqlite/framework.db');
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-  
+    this.redis = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+    this.redis.connect();
     this.setupMiddleware();
     this.setupRoutes();
   }
@@ -64,7 +63,7 @@ export class APIServer {
           timestamp: new Date()
         };
 
-        await this.redis.lpush('queue:test_writer', JSON.stringify(message));
+        await this.redis.lPush('queue:test_writer', JSON.stringify(message));
 
         // Try to get the generated test code if it already exists (rare, but possible in fast systems)
         let testCase = this.db.getTestCase(message.id);
@@ -127,7 +126,7 @@ export class APIServer {
           timestamp: new Date()
         };
 
-        await this.redis.lpush('queue:test_executor', JSON.stringify(message));
+        await this.redis.lPush('queue:test_executor', JSON.stringify(message));
 
         res.json({ 
           message: 'Test execution started',
@@ -166,12 +165,8 @@ export class APIServer {
     // System Status API
     this.app.get('/api/v1/system/status', async (req, res) => {
       try {
-        // Check Redis connection
         const redisStatus = await this.redis.ping();
-      
-        // Get basic stats
         const testCasesCount = this.db.getAllTestCases().length;
-      
         res.json({
           status: 'operational',
           redis: redisStatus === 'PONG' ? 'connected' : 'disconnected',
@@ -202,7 +197,7 @@ export class APIServer {
   }
 
   async stop(): Promise<void> {
-    await this.redis.disconnect();
+    await this.redis.quit();
     this.db.close();
   }
 }

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
+import { createClient } from 'redis';
 
 async function validateSetup() {
     console.log('🔍 Validating Multi-Agent Testing Framework Setup...\n');
@@ -26,10 +27,10 @@ async function validateSetup() {
             name: 'Redis Connection',
             check: async () => {
                 try {
-                    const { Redis } = await import('ioredis');
-                    const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+                    const redis = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+                    await redis.connect();
                     const result = await redis.ping();
-                    await redis.disconnect();
+                    await redis.quit();
                     return result === 'PONG';
                 } catch (error) {
                     return false;

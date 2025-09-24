@@ -1,4 +1,4 @@
-import { Redis } from 'ioredis';
+import { createClient } from 'redis';
 export interface Agent {
   start(): Promise<void>;
   stop(): Promise<void>;
@@ -13,15 +13,18 @@ export abstract class BaseAgent implements Agent {
   // Overridable by subclasses for custom message handling
   protected abstract handleMessage(message: AgentMessage): Promise<void>;
   protected config: AgentConfig;
-  protected redis: any; // TODO: Add proper Redis client type
+  protected redis: any; // Command client for all Redis operations
+  protected subscriber: any; // Subscriber client for pub/sub
 
   constructor(config: AgentConfig) {
     this.config = config;
   }
 
   async start(): Promise<void> {
-    this.redis = await this.initializeRedis();
-    await this.initialize();
+  const { commandClient, subscriber } = await this.initializeRedis();
+  this.redis = commandClient;
+  this.subscriber = subscriber;
+  await this.initialize();
   }
 
   async stop(): Promise<void> {
@@ -33,36 +36,23 @@ export abstract class BaseAgent implements Agent {
   protected abstract cleanup(): Promise<void>;
 
   protected async initializeRedis(): Promise<any> {
-    const redisUrl = this.config.redis.url || 'redis://localhost:6379';
-    const pub = new Redis(redisUrl);
-    const sub = new Redis(redisUrl);
+    const redisUrl = this.config.redis?.url || 'redis://localhost:6379';
+    const commandClient = createClient({ url: redisUrl });
+    const subscriber = createClient({ url: redisUrl });
+    await commandClient.connect();
+    await subscriber.connect();
 
     // Subscribe to this agent's channel
-    sub.subscribe(this.config.id)
-  .then((count) => {
-        // Successfully subscribed
-      })
-      .catch((err: Error) => {
-        console.error(`Failed to subscribe to channel ${this.config.id}:`, err);
-      });
-
-    // Listen for messages and route to processMessage
-    sub.on('message', async (channel: string, message: string) => {
+    await subscriber.subscribe(this.config.id, async (message: string) => {
       try {
-      const parsed: AgentMessage = JSON.parse(message);
-      await this.processMessage(parsed);
+        const parsed: AgentMessage = JSON.parse(message);
+        await this.processMessage(parsed);
       } catch (err: unknown) {
-      console.error('Error processing incoming message:', err);
+        console.error('Error processing incoming message:', err);
       }
     });
 
-    // Return an object with publish, set, get methods
-    return {
-      publish: (target: string, msg: string) => pub.publish(target, msg),
-      set: (key: string, value: string) => pub.set(key, value),
-      get: (key: string) => pub.get(key),
-      quit: () => { pub.quit(); sub.quit(); }
-    };
+    return { commandClient, subscriber };
   }
 
   protected async storeData(key: string, data: any): Promise<void> {
