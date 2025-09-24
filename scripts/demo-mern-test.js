@@ -1,4 +1,4 @@
-const axios = require('axios');
+import axios from 'axios';
 
 const API_BASE = 'http://localhost:3000/api/v1';
 
@@ -72,12 +72,12 @@ async function runMERNDemo() {
           
             // Wait between apps to avoid overwhelming the system
             if (i < DEMO_APPS.length - 1) {
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await new Promise(resolve => setTimeout(resolve, 10800));
             }
         }
       
         console.log('⏳ Waiting for test generation to complete...');
-        await new Promise(resolve => setTimeout(resolve, 30000));
+        await new Promise(resolve => setTimeout(resolve, 10800));
       
         // List all generated tests
         console.log('\n📋 Generated Test Cases:');
@@ -106,7 +106,7 @@ async function runMERNDemo() {
             console.log(`✅ Execution started: ${executeResponse.data.messageId}`);
           
             // Wait between executions
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise(resolve => setTimeout(resolve, 10800));
         }
       
         console.log('\n🎉 MERN Stack Testing Demo completed successfully!');

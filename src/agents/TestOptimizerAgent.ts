@@ -12,6 +12,11 @@ export class TestOptimizerAgent extends BaseAgent {
   // Handles incoming messages and routes them to processMessage
   protected async handleMessage(message: Message): Promise<void> {
   console.log('TestOptimizerAgent: Received message:', message);
+  await this.sendMessage('logger_1', 'LOG', {
+    level: 'info',
+    message: 'TestOptimizerAgent: Received message',
+    data: { message }
+  });
     await this.processMessage(message);
   }
 
@@ -27,6 +32,11 @@ export class TestOptimizerAgent extends BaseAgent {
 
   protected async initialize(): Promise<void> {
     console.log('Test Optimizer initialized');
+    await this.sendMessage('logger_1', 'LOG', {
+      level: 'info',
+      message: 'Test Optimizer initialized',
+      data: {}
+    });
     // You could load optimization rules or models here
   }
 
@@ -37,11 +47,21 @@ export class TestOptimizerAgent extends BaseAgent {
         break;
       default:
         console.log(`Unknown message type: ${message.type}`);
+        await this.sendMessage('logger_1', 'LOG', {
+          level: 'warn',
+          message: `Unknown message type: ${message.type}`,
+          data: { message }
+        });
     }
   }
 
   private async handleOptimizeTest(message: Message): Promise<void> {
   console.log('TestOptimizerAgent: Handling OPTIMIZE_TEST for script:', message.payload?.testScript);
+  await this.sendMessage('logger_1', 'LOG', {
+    level: 'info',
+    message: 'TestOptimizerAgent: Handling OPTIMIZE_TEST',
+    data: { testScript: message.payload?.testScript }
+  });
     // Example: Analyze the test script and provide suggestions
     const testScript = message.payload?.testScript || '';
     const suggestions: string[] = [];
@@ -69,5 +89,10 @@ export class TestOptimizerAgent extends BaseAgent {
   protected async cleanup(): Promise<void> {
     // Cleanup resources if needed
     console.log('Test Optimizer cleanup complete');
+    await this.sendMessage('logger_1', 'LOG', {
+      level: 'info',
+      message: 'Test Optimizer cleanup complete',
+      data: {}
+    });
   }
 }

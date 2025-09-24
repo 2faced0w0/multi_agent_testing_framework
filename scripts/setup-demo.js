@@ -1,5 +1,5 @@
-const { DatabaseManager } = require('../dist/database/DatabaseManager');
-const { v4: uuid } = require('uuid');
+import { DatabaseManager } from '../dist/database/DatabaseManager.js';
+import { v4 as uuid } from 'uuid';
 
 async function setupDemo() {
     console.log('Setting up demo data...');

@@ -4,12 +4,15 @@ import { chromium, Browser, Page } from 'playwright';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import path from 'path';
+import Redis from 'ioredis';
 
 export class TestExecutorAgent extends BaseAgent {
   private browser: Browser | null = null;
+  public redis: any;
 
   constructor(config: AgentConfig) {
-    super(config);
+  super(config);
+  this.redis = new (Redis as any)(process.env.REDIS_URL || 'redis://localhost:6379');
   }
 
   // Handles incoming messages and delegates to processMessage
@@ -40,6 +43,13 @@ export class TestExecutorAgent extends BaseAgent {
   protected async sendMessage(target: string, type: string, payload: any): Promise<void> {
     // Replace with actual messaging logic (e.g., event bus, IPC, etc.)
     console.log(`Sending message to ${target}:`, { type, payload });
+    if (target !== 'logger_1') {
+      await super.sendMessage('logger_1', 'LOG', {
+        level: 'info',
+        message: `Sending message to ${target}`,
+        data: { type, payload }
+      });
+    }
   }
 
   protected async initialize(): Promise<void> {
@@ -55,6 +65,11 @@ export class TestExecutorAgent extends BaseAgent {
         break;
       default:
         console.log(`Unknown message type: ${message.type}`);
+        await this.sendMessage('logger_1', 'LOG', {
+          level: 'warn',
+          message: `Unknown message type: ${message.type}`,
+          data: { message }
+        });
     }
   }
 
@@ -63,6 +78,11 @@ export class TestExecutorAgent extends BaseAgent {
 
     try {
       console.log(`Executing test: ${testCaseId}`);
+      await this.sendMessage('logger_1', 'LOG', {
+        level: 'info',
+        message: `Executing test: ${testCaseId}`,
+        data: { testCaseId }
+      });
 
       const testCase = await this.getData(`testcase:${testCaseId}`);
       if (!testCase) {
@@ -145,6 +165,11 @@ export class TestExecutorAgent extends BaseAgent {
 
   private async runTestCode(page: Page, testCase: any, executionId: string): Promise<any> {
     console.log('Navigating to:', testCase.targetUrl);
+    await this.sendMessage('logger_1', 'LOG', {
+      level: 'info',
+      message: 'Navigating to',
+      data: { targetUrl: testCase.targetUrl }
+    });
     await page.goto(testCase.targetUrl);
 
     await page.waitForLoadState('networkidle');
@@ -181,11 +206,33 @@ export class TestExecutorAgent extends BaseAgent {
       await this.browser.close();
       this.browser = null;
     }
+    await this.sendMessage('logger_1', 'LOG', {
+      level: 'info',
+      message: 'TestExecutorAgent cleanup complete',
+      data: {}
+    });
+  }
+
+  // Poll Redis queue:test_executor for new messages
+  private async pollQueue(): Promise<void> {
+    while (true) {
+      try {
+        const data = await this.redis.brpop('queue:test_executor', 0);
+        if (data && data[1]) {
+          const message = JSON.parse(data[1]);
+          await this.handleMessage(message);
+        }
+      } catch (err) {
+        console.error('[TestExecutorAgent] Error polling Redis queue:', err);
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
   }
 
   async start(): Promise<void> {
     await this.initialize();
     await super.start();
+    this.pollQueue();
   }
 
   async stop(): Promise<void> {

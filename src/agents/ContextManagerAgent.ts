@@ -24,6 +24,11 @@ export class ContextManagerAgent extends BaseAgent {
 
   protected async initialize(): Promise<void> {
     console.log('Context Manager initialized');
+    await this.sendMessage('logger_1', 'LOG', {
+      level: 'info',
+      message: 'Context Manager initialized',
+      data: {}
+    });
     // Optionally load persisted context here
   }
 
@@ -37,6 +42,11 @@ export class ContextManagerAgent extends BaseAgent {
         break;
       default:
         console.log(`Unknown message type: ${message.type}`);
+        await this.sendMessage('logger_1', 'LOG', {
+          level: 'warn',
+          message: `Unknown message type: ${message.type}`,
+          data: { message }
+        });
     }
   }
 

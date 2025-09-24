@@ -1,5 +1,5 @@
-const axios = require('axios');
-const open = require('open'); // npm install open
+import axios from 'axios';
+import open from 'open'; // npm install open
 
 async function runFinalDemo() {
     console.log('🎬 Multi-Agent Testing Framework - Final Demo');
@@ -50,11 +50,11 @@ async function runFinalDemo() {
             console.log(`   ✅ Generated: ${response.data.messageId}`);
           
             // Wait between generations
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 10800));
         }
       
         console.log('\n3. ⏳ Waiting for test generation to complete...');
-        await new Promise(resolve => setTimeout(resolve, 20000));
+        await new Promise(resolve => setTimeout(resolve, 10800));
       
         console.log('\n4. 📋 Retrieving generated test cases...');
         const testCases = await axios.get(`${API_BASE}/tests/cases`);
@@ -77,7 +77,7 @@ async function runFinalDemo() {
             });
           
             console.log(`   ✅ Started: ${execution.data.messageId}`);
-            await new Promise(resolve => setTimeout(resolve, 15000));
+            await new Promise(resolve => setTimeout(resolve, 10800));
         }
       
         console.log('\n6. 🌐 Opening web dashboard...');

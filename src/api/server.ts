@@ -66,6 +66,10 @@ export class APIServer {
 
         await this.redis.lpush('queue:test_writer', JSON.stringify(message));
 
+        // Try to get the generated test code if it already exists (rare, but possible in fast systems)
+        let testCase = this.db.getTestCase(message.id);
+        let playwrightCode = testCase ? testCase.playwright_code : null;
+
         res.json({
           message: 'Test generation started',
           messageId: message.id,
@@ -74,7 +78,8 @@ export class APIServer {
           description,
           timestamp: message.timestamp,
           status: 'pending',
-          statusEndpoint: `/api/v1/tests/generate/status/${message.id}`
+          statusEndpoint: `/api/v1/tests/generate/status/${message.id}`,
+          playwrightCode
         });
 
       } catch (error) {

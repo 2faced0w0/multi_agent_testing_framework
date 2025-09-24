@@ -27,7 +27,7 @@ async function runIntegrationTest() {
       
         // Wait for test generation to complete
         console.log('\n3. Waiting for test generation to complete...');
-        await new Promise(resolve => setTimeout(resolve, 10000));
+        await new Promise(resolve => setTimeout(resolve, 10800));
       
         // Test 3: List test cases
         console.log('\n4. Testing test case retrieval...');

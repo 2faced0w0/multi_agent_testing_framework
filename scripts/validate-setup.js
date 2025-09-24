@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
 
 async function validateSetup() {
     console.log('🔍 Validating Multi-Agent Testing Framework Setup...\n');
@@ -26,7 +26,7 @@ async function validateSetup() {
             name: 'Redis Connection',
             check: async () => {
                 try {
-                    const Redis = require('ioredis');
+                    const { Redis } = await import('ioredis');
                     const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
                     const result = await redis.ping();
                     await redis.disconnect();
