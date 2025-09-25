@@ -12,19 +12,19 @@ export class SqliteManager {
   }
 
   private createTable() {
-    this.db.prepare(`CREATE TABLE IF NOT EXISTS testcases (
+    this.db.prepare(`CREATE TABLE IF NOT EXISTS test_cases (
       id TEXT PRIMARY KEY,
       name TEXT,
       description TEXT,
       type TEXT,
-      targetUrl TEXT,
-      playwrightCode TEXT,
-      createdAt TEXT
+      target_url TEXT,
+      playwright_code TEXT,
+      created_at TEXT
     )`).run();
   }
 
   insertTestCase(testCase: TestCase) {
-    this.db.prepare(`INSERT OR REPLACE INTO testcases (id, name, description, type, targetUrl, playwrightCode, createdAt)
+    this.db.prepare(`INSERT OR REPLACE INTO test_cases (id, name, description, type, target_url, playwright_code, created_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)`)
       .run(
         testCase.id,

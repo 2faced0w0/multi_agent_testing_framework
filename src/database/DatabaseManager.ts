@@ -3,6 +3,11 @@ import Database from 'better-sqlite3';
 import path from 'path';
 
 export class DatabaseManager {
+  public getLatestExecutionByTestCaseId(testCaseId: string): any {
+    const stmt = this.db.prepare('SELECT * FROM test_executions WHERE test_case_id = ? ORDER BY start_time DESC');
+    const executions = stmt.all(testCaseId);
+    return executions.length > 0 ? executions[0] : null;
+  }
   private db: any;
 
   constructor(dbPath: string) {

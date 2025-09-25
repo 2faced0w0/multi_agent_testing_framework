@@ -87,26 +87,35 @@ export class APIServer {
       }
     });
     
-      // Test Generation Status API
-      this.app.get('/api/v1/tests/generate/status/:id', async (req, res) => {
-        try {
-          const testCase = this.db.getTestCase(req.params.id);
-          if (testCase) {
-            return res.json({
-              status: 'completed',
-              testCase
-            });
-          } else {
-            return res.json({
-              status: 'pending',
-              testCase: null
-            });
-          }
-        } catch (error) {
-          console.error('Error checking test generation status:', error);
-          res.status(500).json({ error: 'Internal server error' });
+    this.app.get('/api/v1/tests/generate/status/:id', async (req, res) => {
+      try {
+        const testCase = this.db.getTestCase(req.params.id);
+        if (testCase) {
+          return res.json({ status: 'completed', testCase });
+        } else {
+          return res.json({ status: 'pending', testCase: null });
         }
-      });
+      } catch (error) {
+        console.error('Error checking test generation status:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
+    // CodeWatcher API endpoint
+    this.app.post('/api/v1/codewatcher/validate', express.text({ type: '*/*' }), async (req, res) => {
+      try {
+        const code = req.body;
+        if (!code || typeof code !== 'string') {
+          return res.status(400).json({ error: 'Missing or invalid code' });
+        }
+        const { CodeWatcher } = await import('../utils/codewatcher.js');
+        const fixedCode = CodeWatcher.validateAndFixTestCode(code);
+        res.json({ fixedCode });
+      } catch (error) {
+        console.error('Error validating code:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
 
     this.app.post('/api/v1/tests/execute', async (req, res) => {
       try {
@@ -127,19 +136,11 @@ export class APIServer {
 
         await this.redis.lPush('queue:test_executor', JSON.stringify(message));
 
-        // Try to get the latest execution status for this test case
-        let executionStatus = null;
-        const executions = this.db.getAllTestCases().filter(tc => tc.id === testCaseId);
-        if (executions.length > 0) {
-          // If you have a getTestExecution or similar, use it here
-          // For now, just return the test case info
-          executionStatus = executions[0];
-        }
-
+        // Respond immediately with test execution started and messageId
         res.json({ 
           message: 'Test execution started',
           messageId: message.id,
-          executionStatus
+          statusEndpoint: `/api/v1/tests/execute/status/${testCaseId}`
         });
 
       } catch (error) {
@@ -148,9 +149,44 @@ export class APIServer {
       }
     });
 
+    this.app.get('/api/v1/tests/execute/status/:testCaseId', async (req, res) => {
+      try {
+        const testCaseId = req.params.testCaseId;
+        let executionStatus = null;
+        if (this.db && this.db.getLatestExecutionByTestCaseId) {
+          const latest = await this.db.getLatestExecutionByTestCaseId(testCaseId);
+          if (latest) {
+            executionStatus = {
+              status: latest.status,
+              startTime: latest.start_time,
+              endTime: latest.end_time,
+              result: latest.result ? JSON.parse(latest.result) : null,
+              artifacts: latest.artifacts ? JSON.parse(latest.artifacts) : [],
+              executionId: latest.id
+            };
+          }
+        }
+        if (executionStatus) {
+          res.json({
+            status: executionStatus.status,
+            executionId: executionStatus.executionId,
+            startTime: executionStatus.startTime,
+            endTime: executionStatus.endTime,
+            result: executionStatus.result,
+            artifacts: executionStatus.artifacts
+          });
+        } else {
+          res.json({ status: 'pending' });
+        }
+      } catch (error) {
+        console.error('Error checking test execution status:', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
     this.app.get('/api/v1/tests/cases', async (req, res) => {
       try {
-        const testCases = this.db.getAllTestCases();
+        const testCases = await this.db.getAllTestCases();
         res.json(testCases);
       } catch (error) {
         console.error('Error fetching test cases:', error);
@@ -160,7 +196,8 @@ export class APIServer {
 
     this.app.get('/api/v1/tests/cases/:id', async (req, res) => {
       try {
-        const testCase = this.db.getTestCase(req.params.id);
+        const testCaseId = req.params.id;
+        const testCase = await this.db.getTestCase(testCaseId);
         if (!testCase) {
           return res.status(404).json({ error: 'Test case not found' });
         }
@@ -175,7 +212,8 @@ export class APIServer {
     this.app.get('/api/v1/system/status', async (req, res) => {
       try {
         const redisStatus = await this.redis.ping();
-        const testCasesCount = this.db.getAllTestCases().length;
+        const testCases = await this.db.getAllTestCases();
+        const testCasesCount = Array.isArray(testCases) ? testCases.length : 0;
         res.json({
           status: 'operational',
           redis: redisStatus === 'PONG' ? 'connected' : 'disconnected',

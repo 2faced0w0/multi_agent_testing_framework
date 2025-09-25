@@ -43,4 +43,4 @@ data/sqlite/*.sqlite-journal
 Thumbs.db
 
 # Data
-artifatcts/
+artifatcts/screenshots/

@@ -114,7 +114,19 @@ export class TestExecutorAgent extends BaseAgent {
         artifacts: [] as string[]
       };
 
-      await this.storeData(`execution:${execution.id}`, execution);
+        await this.storeData(`execution:${execution.id}`, execution);
+        // Store initial execution record in DB
+        if (this.db && this.db.createTestExecution) {
+          this.db.createTestExecution({
+            id: execution.id,
+            testCaseId: execution.testCaseId,
+            status: execution.status,
+            startTime: execution.startTime,
+            endTime: execution.endTime,
+            result: execution.result,
+            artifacts: execution.artifacts
+          });
+        }
 
       const result = await this.executeTest(testCase, execution.id);
 
@@ -125,7 +137,16 @@ export class TestExecutorAgent extends BaseAgent {
         execution.artifacts.push(result.screenshot);
       }
 
-      await this.storeData(`execution:${execution.id}`, execution);
+        await this.storeData(`execution:${execution.id}`, execution);
+        // Update execution record in DB
+        if (this.db && this.db.updateTestExecution) {
+          this.db.updateTestExecution(execution.id, {
+            status: execution.status,
+            end_time: execution.endTime ? execution.endTime.toISOString() : null,
+            result: JSON.stringify(execution.result || {}),
+            artifacts: JSON.stringify(execution.artifacts || [])
+          });
+        }
 
       await this.sendMessage(message.source, 'TEST_EXECUTED', {
         execution,
@@ -179,27 +200,79 @@ export class TestExecutorAgent extends BaseAgent {
   }
 
   private async runTestCode(page: Page, testCase: any, executionId: string): Promise<any> {
-    console.log('Navigating to:', testCase.targetUrl);
-    await this.sendMessage('logger_1', 'LOG', {
-      level: 'info',
-      message: 'Navigating to',
-      data: { targetUrl: testCase.targetUrl }
-    });
-    await page.goto(testCase.targetUrl);
+    // Write Playwright code to a file and execute it
+    const fs = await import('fs');
+    const path = await import('path');
+    const { execSync } = await import('child_process');
+    const testsDir = path.join(process.cwd(), 'tests');
+    await fs.promises.mkdir(testsDir, { recursive: true });
+  // Sanitize URL for filename
+  const urlPart = (testCase.targetUrl || '').replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40);
+  const typePart = (testCase.type || 'test').replace(/[^a-zA-Z0-9]/g, '_');
+  const testFileName = `${typePart}_${urlPart}_${testCase.id}.ts`;
+  const testFilePath = path.join(testsDir, testFileName);
+  await fs.promises.writeFile(testFilePath, testCase.playwrightCode, 'utf-8');
 
-    await page.waitForLoadState('networkidle');
-
-    const title = await page.title();
-    const url = page.url();
-
-    const isLoaded = await page.evaluate(() => {
-      return document.readyState === 'complete';
-    });
-
+    let result = '';
+    let error = null;
+    try {
+      // Execute the test file using npx playwright test with a 4 minute timeout
+      const { spawn } = await import('child_process');
+      // Import ChildProcess type for explicit typing
+      // @ts-ignore
+      const timeoutMs = 4 * 60 * 1000; // 4 minutes
+      const child = spawn('npx', ['playwright', 'test', testFilePath, '--reporter=json'], { shell: true });
+      let stdout = '';
+      let stderr = '';
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        child.kill('SIGKILL');
+      }, timeoutMs);
+      if (child.stdout) {
+        child.stdout.on('data', (data: Buffer) => {
+          stdout += data.toString();
+        });
+      }
+      if (child.stderr) {
+        child.stderr.on('data', (data: Buffer) => {
+          stderr += data.toString();
+        });
+      }
+      await new Promise((resolve) => {
+        child.on('close', () => {
+          clearTimeout(timer);
+          resolve(null);
+        });
+      });
+      if (timedOut) {
+        error = `Test execution exceeded 4 minute timeout and was killed.`;
+        await this.sendMessage('logger_1', 'LOG', {
+          level: 'error',
+          message: 'Test execution timed out',
+          data: { testFilePath }
+        });
+      } else if (child.exitCode && child.exitCode !== 0) {
+        error = stderr || `Test execution failed with exit code ${child.exitCode}`;
+        await this.sendMessage('logger_1', 'LOG', {
+          level: 'error',
+          message: 'Error executing Playwright test file',
+          data: { error, testFilePath }
+        });
+      }
+      result = stdout;
+    } catch (err: any) {
+      error = err?.message || String(err);
+      await this.sendMessage('logger_1', 'LOG', {
+        level: 'error',
+        message: 'Error executing Playwright test file',
+        data: { error, testFilePath }
+      });
+    }
     return {
-      title,
-      url,
-      isLoaded,
+      result,
+      error,
+      testFilePath,
       timestamp: new Date()
     };
   }
