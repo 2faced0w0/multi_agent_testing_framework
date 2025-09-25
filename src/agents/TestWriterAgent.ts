@@ -192,7 +192,7 @@ export class TestWriterAgent extends BaseAgent {
     });
     // Use Mistral AI chat completions API
     const response = await this.mistral.chat.complete({
-      model: 'mistral-large-latest',
+      model: 'codestral-2508',
       messages: [
         {
           role: 'system',
