@@ -111,7 +111,6 @@ export class APIServer {
     this.app.post('/api/v1/tests/execute', async (req, res) => {
       try {
         const { testCaseId } = req.body;
-      
         if (!testCaseId) {
           return res.status(400).json({ error: 'testCaseId is required' });
         }
@@ -128,9 +127,19 @@ export class APIServer {
 
         await this.redis.lPush('queue:test_executor', JSON.stringify(message));
 
+        // Try to get the latest execution status for this test case
+        let executionStatus = null;
+        const executions = this.db.getAllTestCases().filter(tc => tc.id === testCaseId);
+        if (executions.length > 0) {
+          // If you have a getTestExecution or similar, use it here
+          // For now, just return the test case info
+          executionStatus = executions[0];
+        }
+
         res.json({ 
           message: 'Test execution started',
-          messageId: message.id
+          messageId: message.id,
+          executionStatus
         });
 
       } catch (error) {

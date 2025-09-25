@@ -41,3 +41,6 @@ data/sqlite/*.sqlite-journal
 .temp/
 .DS_Store
 Thumbs.db
+
+# Data
+artifatcts/

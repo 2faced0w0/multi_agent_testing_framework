@@ -1,6 +1,7 @@
 import { BaseAgent, AgentConfig, AgentMessage } from './BaseAgent.js';
 import { AgentMessage as AgentMessageType } from '../types/index.js';
 import { chromium, Browser, Page } from 'playwright';
+import { DatabaseManager } from '../database/DatabaseManager.js';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import path from 'path';
@@ -8,11 +9,11 @@ import { createClient } from 'redis';
 
 export class TestExecutorAgent extends BaseAgent {
   private browser: Browser | null = null;
-  // Uses redis (command client) from BaseAgent
+  private db: any;
 
   constructor(config: AgentConfig) {
-    super(config);
-  // Redis command client is initialized in BaseAgent
+  super(config);
+  this.db = new DatabaseManager(process.env.DATABASE_PATH || './data/sqlite/framework.db');
   }
 
   // Handles incoming messages and delegates to processMessage
@@ -84,7 +85,21 @@ export class TestExecutorAgent extends BaseAgent {
         data: { testCaseId }
       });
 
-      const testCase = await this.getData(`testcase:${testCaseId}`);
+      let testCase = await this.getData(`testcase:${testCaseId}`);
+      if (!testCase && this.db) {
+        const dbCase = this.db.getTestCase(testCaseId);
+        if (dbCase) {
+          testCase = {
+            id: dbCase.id,
+            name: dbCase.name,
+            description: dbCase.description,
+            type: dbCase.type,
+            targetUrl: dbCase.target_url,
+            playwrightCode: dbCase.playwright_code,
+            createdAt: dbCase.created_at
+          };
+        }
+      }
       if (!testCase) {
         throw new Error(`Test case not found: ${testCaseId}`);
       }
