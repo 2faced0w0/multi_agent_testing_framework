@@ -1,4 +1,5 @@
-import { BaseAgent, AgentConfig, AgentMessage } from './BaseAgent.js';
+import { BaseAgent } from './BaseAgent.js';
+import { AgentConfig, AgentMessage } from '../types/index.js';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import path from 'path';
@@ -34,36 +35,35 @@ export class ReportGeneratorAgent extends BaseAgent {
   }
 
   private async handleGenerateReport(message: AgentMessage): Promise<void> {
-    const { executionId } = message.payload;
+    const { creation_id } = message.payload;
 
     try {
-      console.log(`Generating report for execution: ${executionId}`);
+      console.log(`Generating report for execution: ${creation_id}`);
 
       // Get execution data
-      const execution = await this.getData(`execution:${executionId}`);
+      const execution = await this.getData(`execution:${creation_id}`);
       if (!execution) {
-        throw new Error(`Execution not found: ${executionId}`);
+        throw new Error(`Execution not found: ${creation_id}`);
       }
 
       // Get test case data
-      const testCase = await this.getData(`testcase:${execution.testCaseId}`);
+      const testCase = await this.getData(`testcase:${creation_id}`);
 
       // Generate HTML report
       const reportHtml = this.generateHtmlReport(execution, testCase);
 
       // Save report
-      const reportPath = await this.saveReport(execution.id, reportHtml);
+      const reportPath = await this.saveReport(creation_id, reportHtml);
 
       // Store report metadata
       const report = {
-        id: uuid(),
-        executionId,
+        creation_id,
         type: 'html',
         path: reportPath,
         generatedAt: new Date()
       };
 
-      await this.storeData(`report:${report.id}`, report);
+      await this.storeData(`report:${report.creation_id}`, report);
 
       console.log(`Report generated: ${reportPath}`);
 
@@ -127,13 +127,13 @@ export class ReportGeneratorAgent extends BaseAgent {
 </html>`;
   }
 
-  private async saveReport(executionId: string, html: string): Promise<string> {
+  private async saveReport(creation_id: string, html: string): Promise<string> {
     const reportsDir = path.join(process.cwd(), 'data', 'artifacts', 'reports');
 
     // Ensure directory exists
     fs.mkdirSync(reportsDir, { recursive: true });
 
-    const filename = `report_${executionId}_${Date.now()}.html`;
+    const filename = `report_${creation_id}_${Date.now()}.html`;
     const filepath = path.join(reportsDir, filename);
 
     fs.writeFileSync(filepath, html);

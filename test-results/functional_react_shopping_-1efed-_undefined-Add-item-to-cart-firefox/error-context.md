@@ -1,0 +1,235 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "View source on Github":
+    - /url: https://github.com/jeffersonRibeiro/react-shopping-cart
+    - img [ref=e4] [cursor=pointer]
+  - generic [ref=e8]:
+    - img "Jeremy Akeze - Doghouse IT Recruitment" [ref=e10]
+    - generic [ref=e11]:
+      - heading "Work in the Netherlands" [level=4] [ref=e12]: Work in the Netherlands
+      - paragraph [ref=e14]:
+        - text: Hi! I'm Jeremy Akeze from Doghouse IT Recruitment and I'm looking for skilled Software Engineers like you. If you wish to move abroad,
+        - link "follow me on Linkedin." [ref=e15] [cursor=pointer]:
+          - /url: https://www.linkedin.com/in/jeremy-akeze-9542b396/
+          - generic [ref=e16] [cursor=pointer]: follow me on Linkedin.
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "Sizes:" [level=4] [ref=e20]
+        - generic [ref=e22] [cursor=pointer]:
+          - checkbox "XS" [ref=e23] [cursor=pointer]
+          - generic [ref=e24] [cursor=pointer]: XS
+        - generic [ref=e26] [cursor=pointer]:
+          - checkbox "S" [ref=e27] [cursor=pointer]
+          - generic [ref=e28] [cursor=pointer]: S
+        - generic [ref=e30] [cursor=pointer]:
+          - checkbox "M" [ref=e31] [cursor=pointer]
+          - generic [ref=e32] [cursor=pointer]: M
+        - generic [ref=e34] [cursor=pointer]:
+          - checkbox "ML" [ref=e35] [cursor=pointer]
+          - generic [ref=e36] [cursor=pointer]: ML
+        - generic [ref=e38] [cursor=pointer]:
+          - checkbox "L" [ref=e39] [cursor=pointer]
+          - generic [ref=e40] [cursor=pointer]: L
+        - generic [ref=e42] [cursor=pointer]:
+          - checkbox "XL" [ref=e43] [cursor=pointer]
+          - generic [ref=e44] [cursor=pointer]: XL
+        - generic [ref=e46] [cursor=pointer]:
+          - checkbox "XXL" [ref=e47] [cursor=pointer]
+          - generic [ref=e48] [cursor=pointer]: XXL
+      - paragraph [ref=e50]:
+        - generic [ref=e51]: Leave a star on Github if this repository was useful :)
+    - main [ref=e53]:
+      - main [ref=e54]:
+        - paragraph [ref=e55]: 16 Product(s) found
+      - generic [ref=e56]:
+        - generic [ref=e57]:
+          - generic [ref=e58]: Free shipping
+          - paragraph [ref=e60]: Cropped Stay Groovy off white
+          - generic [ref=e61]:
+            - paragraph [ref=e62]:
+              - generic [ref=e63]: $
+              - generic [ref=e64]: "10"
+              - generic [ref=e65]: ".90"
+            - paragraph [ref=e66]:
+              - generic [ref=e67]: or 9 x
+              - generic [ref=e68]: $1.21
+          - button "Add to cart" [ref=e69] [cursor=pointer]
+        - generic [ref=e70]:
+          - generic [ref=e71]: Free shipping
+          - paragraph [ref=e73]: Basic Cactus White T-shirt
+          - generic [ref=e74]:
+            - paragraph [ref=e75]:
+              - generic [ref=e76]: $
+              - generic [ref=e77]: "13"
+              - generic [ref=e78]: ".25"
+            - paragraph [ref=e79]:
+              - generic [ref=e80]: or 3 x
+              - generic [ref=e81]: $4.42
+          - button "Add to cart" [ref=e82] [cursor=pointer]
+        - generic [ref=e83]:
+          - paragraph [ref=e85]: Skater Black Sweatshirt
+          - generic [ref=e86]:
+            - paragraph [ref=e87]:
+              - generic [ref=e88]: $
+              - generic [ref=e89]: "25"
+              - generic [ref=e90]: ".90"
+            - paragraph [ref=e91]:
+              - generic [ref=e92]: or 12 x
+              - generic [ref=e93]: $2.16
+          - button "Add to cart" [ref=e94] [cursor=pointer]
+        - generic [ref=e95]:
+          - generic [ref=e96]: Free shipping
+          - paragraph [ref=e98]: Black Tule Oversized
+          - generic [ref=e99]:
+            - paragraph [ref=e100]:
+              - generic [ref=e101]: $
+              - generic [ref=e102]: "29"
+              - generic [ref=e103]: ".45"
+            - paragraph [ref=e104]:
+              - generic [ref=e105]: or 5 x
+              - generic [ref=e106]: $5.89
+          - button "Add to cart" [ref=e107] [cursor=pointer]
+        - generic [ref=e108]:
+          - generic [ref=e109]: Free shipping
+          - paragraph [ref=e111]: Black Batman T-shirt
+          - generic [ref=e112]:
+            - paragraph [ref=e113]:
+              - generic [ref=e114]: $
+              - generic [ref=e115]: "10"
+              - generic [ref=e116]: ".90"
+            - paragraph [ref=e117]:
+              - generic [ref=e118]: or 9 x
+              - generic [ref=e119]: $1.21
+          - button "Add to cart" [ref=e120] [cursor=pointer]
+        - generic [ref=e121]:
+          - generic [ref=e122]: Free shipping
+          - paragraph [ref=e124]: Blue T-Shirt
+          - generic [ref=e125]:
+            - paragraph [ref=e126]:
+              - generic [ref=e127]: $
+              - generic [ref=e128]: "9"
+              - generic [ref=e129]: ".00"
+            - paragraph [ref=e130]:
+              - generic [ref=e131]: or 3 x
+              - generic [ref=e132]: $3.00
+          - button "Add to cart" [ref=e133] [cursor=pointer]
+        - generic [ref=e134]:
+          - generic [ref=e135]: Free shipping
+          - paragraph [ref=e137]: Loose Black T-shirt
+          - generic [ref=e138]:
+            - paragraph [ref=e139]:
+              - generic [ref=e140]: $
+              - generic [ref=e141]: "14"
+              - generic [ref=e142]: ".00"
+            - paragraph [ref=e143]:
+              - generic [ref=e144]: or 5 x
+              - generic [ref=e145]: $2.80
+          - button "Add to cart" [ref=e146] [cursor=pointer]
+        - generic [ref=e147]:
+          - generic [ref=e148]: Free shipping
+          - paragraph [ref=e150]: Ringer Hall Pass
+          - generic [ref=e151]:
+            - paragraph [ref=e152]:
+              - generic [ref=e153]: $
+              - generic [ref=e154]: "10"
+              - generic [ref=e155]: ".90"
+            - paragraph [ref=e156]:
+              - generic [ref=e157]: or 9 x
+              - generic [ref=e158]: $1.21
+          - button "Add to cart" [ref=e159] [cursor=pointer]
+        - generic [ref=e160]:
+          - generic [ref=e161]: Free shipping
+          - paragraph [ref=e163]: Grey T-shirt
+          - generic [ref=e164]:
+            - paragraph [ref=e165]:
+              - generic [ref=e166]: $
+              - generic [ref=e167]: "14"
+              - generic [ref=e168]: ".90"
+            - paragraph [ref=e169]:
+              - generic [ref=e170]: or 7 x
+              - generic [ref=e171]: $2.13
+          - button "Add to cart" [ref=e172] [cursor=pointer]
+        - generic [ref=e173]:
+          - generic [ref=e174]: Free shipping
+          - paragraph [ref=e176]: Black T-shirt with white stripes
+          - generic [ref=e177]:
+            - paragraph [ref=e178]:
+              - generic [ref=e179]: $
+              - generic [ref=e180]: "14"
+              - generic [ref=e181]: ".90"
+            - paragraph [ref=e182]:
+              - generic [ref=e183]: or 7 x
+              - generic [ref=e184]: $2.13
+          - button "Add to cart" [ref=e185] [cursor=pointer]
+        - generic [ref=e186]:
+          - paragraph [ref=e188]: Turtles Ninja T-shirt
+          - generic [ref=e189]:
+            - paragraph [ref=e190]:
+              - generic [ref=e191]: $
+              - generic [ref=e192]: "10"
+              - generic [ref=e193]: ".90"
+            - paragraph [ref=e194]:
+              - generic [ref=e195]: or 9 x
+              - generic [ref=e196]: $1.21
+          - button "Add to cart" [ref=e197] [cursor=pointer]
+        - generic [ref=e198]:
+          - generic [ref=e199]: Free shipping
+          - paragraph [ref=e201]: Slim black T-shirt
+          - paragraph [ref=e203]:
+            - generic [ref=e204]: $
+            - generic [ref=e205]: "49"
+            - generic [ref=e206]: ".90"
+          - button "Add to cart" [ref=e207] [cursor=pointer]
+        - generic [ref=e208]:
+          - generic [ref=e209]: Free shipping
+          - paragraph [ref=e211]: Blue Sweatshirt
+          - generic [ref=e212]:
+            - paragraph [ref=e213]:
+              - generic [ref=e214]: $
+              - generic [ref=e215]: "22"
+              - generic [ref=e216]: ".50"
+            - paragraph [ref=e217]:
+              - generic [ref=e218]: or 4 x
+              - generic [ref=e219]: $5.63
+          - button "Add to cart" [ref=e220] [cursor=pointer]
+        - generic [ref=e221]:
+          - paragraph [ref=e223]: White T-shirt Gucci
+          - generic [ref=e224]:
+            - paragraph [ref=e225]:
+              - generic [ref=e226]: $
+              - generic [ref=e227]: "18"
+              - generic [ref=e228]: ".70"
+            - paragraph [ref=e229]:
+              - generic [ref=e230]: or 4 x
+              - generic [ref=e231]: $4.67
+          - button "Add to cart" [ref=e232] [cursor=pointer]
+        - generic [ref=e233]:
+          - generic [ref=e234]: Free shipping
+          - paragraph [ref=e236]: Tropical Wine T-shirt
+          - generic [ref=e237]:
+            - paragraph [ref=e238]:
+              - generic [ref=e239]: $
+              - generic [ref=e240]: "134"
+              - generic [ref=e241]: ".90"
+            - paragraph [ref=e242]:
+              - generic [ref=e243]: or 5 x
+              - generic [ref=e244]: $26.98
+          - button "Add to cart" [ref=e245] [cursor=pointer]
+        - generic [ref=e246]:
+          - generic [ref=e247]: Free shipping
+          - paragraph [ref=e249]: Marine Blue T-shirt
+          - generic [ref=e250]:
+            - paragraph [ref=e251]:
+              - generic [ref=e252]: $
+              - generic [ref=e253]: "49"
+              - generic [ref=e254]: ".00"
+            - paragraph [ref=e255]:
+              - generic [ref=e256]: or 9 x
+              - generic [ref=e257]: $5.44
+          - button "Add to cart" [ref=e258] [cursor=pointer]
+  - button "0" [ref=e260] [cursor=pointer]:
+    - generic "Products in cart quantity" [ref=e262] [cursor=pointer]: "0"
+```

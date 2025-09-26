@@ -1,5 +1,5 @@
 export interface AgentConfig {
-  id: string;
+  creation_id: string;
   type: AgentType;
   redis: {
     url: string;
@@ -14,7 +14,7 @@ export type AgentType = 'test_writer' | 'test_executor' | 'report_generator' |
                        'test_optimizer' | 'context_manager' | 'logger';
 
 export interface AgentMessage {
-  id: string;
+  creation_id: string;
   type: string;
   source: string;
   target: string;
@@ -23,7 +23,7 @@ export interface AgentMessage {
 }
 
 export interface TestCase {
-  id: string;
+  creation_id: string;
   name: string;
   description: string;
   type: 'functional' | 'accessibility' | 'performance';
@@ -33,8 +33,7 @@ export interface TestCase {
 }
 
 export interface TestExecution {
-  id: string;
-  testCaseId: string;
+  creation_id: string;
   status: 'queued' | 'running' | 'passed' | 'failed';
   startTime: Date;
   endTime?: Date;

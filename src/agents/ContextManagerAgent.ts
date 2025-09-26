@@ -1,5 +1,5 @@
-import { BaseAgent, AgentConfig } from './BaseAgent.js';
-import { AgentMessage } from '../types/index.js';
+import { BaseAgent } from './BaseAgent.js';
+import { AgentConfig, AgentMessage } from '../types/index.js';
 
 export class ContextManagerAgent extends BaseAgent {
   private contextStore: Map<string, any> = new Map();

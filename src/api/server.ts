@@ -54,8 +54,9 @@ export class APIServer {
         }
 
         // Send message to Test Writer Agent
+        const creation_id = uuid();
         const message = {
-          id: uuid(),
+          creation_id,
           type: 'GENERATE_TEST',
           source: 'api_server',
           target: 'test_writer',
@@ -64,20 +65,19 @@ export class APIServer {
         };
 
         await this.redis.lPush('queue:test_writer', JSON.stringify(message));
-
+        await new Promise(resolve => setTimeout(resolve, 12000));
         // Try to get the generated test code if it already exists (rare, but possible in fast systems)
-        let testCase = this.db.getTestCase(message.id);
+        let testCase = this.db.getTestCase(creation_id);
         let playwrightCode = testCase ? testCase.playwright_code : null;
 
         res.json({
           message: 'Test generation started',
-          messageId: message.id,
           url,
           testType,
           description,
           timestamp: message.timestamp,
           status: 'pending',
-          statusEndpoint: `/api/v1/tests/generate/status/${message.id}`,
+          creation_id,
           playwrightCode
         });
 
@@ -87,9 +87,9 @@ export class APIServer {
       }
     });
     
-    this.app.get('/api/v1/tests/generate/status/:id', async (req, res) => {
+    this.app.get('/api/v1/tests/generate/status/:creation_id', async (req, res) => {
       try {
-        const testCase = this.db.getTestCase(req.params.id);
+        const testCase = this.db.getTestCase(req.params.creation_id);
         if (testCase) {
           return res.json({ status: 'completed', testCase });
         } else {
@@ -119,18 +119,18 @@ export class APIServer {
 
     this.app.post('/api/v1/tests/execute', async (req, res) => {
       try {
-        const { testCaseId } = req.body;
-        if (!testCaseId) {
-          return res.status(400).json({ error: 'testCaseId is required' });
+        const { creation_id } = req.body;
+        if (!creation_id) {
+          return res.status(400).json({ error: 'creation_id is required' });
         }
 
         // Send message to Test Executor Agent
         const message = {
-          id: uuid(),
+          creation_id,
           type: 'EXECUTE_TEST',
           source: 'api_server',
           target: 'test_executor',
-          payload: { testCaseId },
+          payload: { creation_id },
           timestamp: new Date()
         };
 
@@ -139,8 +139,8 @@ export class APIServer {
         // Respond immediately with test execution started and messageId
         res.json({ 
           message: 'Test execution started',
-          messageId: message.id,
-          statusEndpoint: `/api/v1/tests/execute/status/${testCaseId}`
+          messageId: message.creation_id,
+          statusEndpoint: `/api/v1/tests/execute/status/${creation_id}`
         });
 
       } catch (error) {
@@ -149,12 +149,12 @@ export class APIServer {
       }
     });
 
-    this.app.get('/api/v1/tests/execute/status/:testCaseId', async (req, res) => {
+    this.app.get('/api/v1/tests/execute/status/:creation_id', async (req, res) => {
       try {
-        const testCaseId = req.params.testCaseId;
+        const creation_id = req.params.creation_id;
         let executionStatus = null;
         if (this.db && this.db.getLatestExecutionByTestCaseId) {
-          const latest = await this.db.getLatestExecutionByTestCaseId(testCaseId);
+          const latest = await this.db.getLatestExecutionByTestCaseId(creation_id);
           if (latest) {
             executionStatus = {
               status: latest.status,
@@ -162,14 +162,14 @@ export class APIServer {
               endTime: latest.end_time,
               result: latest.result ? JSON.parse(latest.result) : null,
               artifacts: latest.artifacts ? JSON.parse(latest.artifacts) : [],
-              executionId: latest.id
+              creation_id: latest.creation_id
             };
           }
         }
         if (executionStatus) {
           res.json({
             status: executionStatus.status,
-            executionId: executionStatus.executionId,
+            creation_id: executionStatus.creation_id,
             startTime: executionStatus.startTime,
             endTime: executionStatus.endTime,
             result: executionStatus.result,
@@ -194,10 +194,9 @@ export class APIServer {
       }
     });
 
-    this.app.get('/api/v1/tests/cases/:id', async (req, res) => {
+    this.app.get('/api/v1/tests/cases/:creation_id', async (req, res) => {
       try {
-        const testCaseId = req.params.id;
-        const testCase = await this.db.getTestCase(testCaseId);
+        const testCase = await this.db.getTestCase(req.params.creation_id);
         if (!testCase) {
           return res.status(404).json({ error: 'Test case not found' });
         }

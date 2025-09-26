@@ -43,4 +43,5 @@ data/sqlite/*.sqlite-journal
 Thumbs.db
 
 # Data
-artifatcts/screenshots/
+.github/copilot-instructions.md
+data/artifacts/screenshots/

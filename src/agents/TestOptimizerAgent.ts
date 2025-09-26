@@ -1,8 +1,5 @@
-import { BaseAgent, AgentConfig, AgentMessage } from './BaseAgent.js';
-import { AgentMessage as TypesAgentMessage } from '../types/index.js';
-
-// Use the imported AgentMessage from types/index.js to avoid duplicate import
-type Message = TypesAgentMessage;
+import { BaseAgent } from './BaseAgent.js';
+import { AgentConfig, AgentMessage } from '../types/index.js';
 
 export class TestOptimizerAgent extends BaseAgent {
   constructor(config: AgentConfig) {
@@ -10,7 +7,7 @@ export class TestOptimizerAgent extends BaseAgent {
   }
 
   // Handles incoming messages and routes them to processMessage
-  protected async handleMessage(message: Message): Promise<void> {
+  protected async handleMessage(message: AgentMessage): Promise<void> {
   console.log('TestOptimizerAgent: Received message:', message);
   await this.sendMessage('logger_1', 'LOG', {
     level: 'info',
@@ -40,7 +37,7 @@ export class TestOptimizerAgent extends BaseAgent {
     // You could load optimization rules or models here
   }
 
-  public async processMessage(message: Message): Promise<void> {
+  public async processMessage(message: AgentMessage): Promise<void> {
     switch (message.type) {
       case 'OPTIMIZE_TEST':
         await this.handleOptimizeTest(message);
@@ -55,7 +52,7 @@ export class TestOptimizerAgent extends BaseAgent {
     }
   }
 
-  private async handleOptimizeTest(message: Message): Promise<void> {
+  private async handleOptimizeTest(message: AgentMessage): Promise<void> {
   console.log('TestOptimizerAgent: Handling OPTIMIZE_TEST for script:', message.payload?.testScript);
   await this.sendMessage('logger_1', 'LOG', {
     level: 'info',

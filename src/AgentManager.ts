@@ -4,7 +4,8 @@ import { ReportGeneratorAgent } from './agents/ReportGeneratorAgent.js';
 import { TestOptimizerAgent } from './agents/TestOptimizerAgent.js';
 import { ContextManagerAgent } from './agents/ContextManagerAgent.js';
 import { LoggerAgent } from './agents/LoggerAgent.js';
-import { Agent, AgentType, AgentConfig } from './agents/BaseAgent.js';
+import { Agent } from './agents/BaseAgent.js';
+import { AgentType, AgentConfig } from './types/index.js';
 
 export class AgentManager {
   private agents: Map<string, Agent> = new Map();
@@ -14,37 +15,37 @@ export class AgentManager {
   
     const agentConfigs: AgentConfig[] = [
       {
-        id: 'test_writer_1',
+        creation_id: 'test_writer_1',
         type: 'test_writer',
         redis: { url: redisUrl },
         logging: { level: 'info', file: './data/logs/test_writer.log' }
       },
       {
-        id: 'test_executor_1',
+        creation_id: 'test_executor_1',
         type: 'test_executor',
         redis: { url: redisUrl },
         logging: { level: 'info', file: './data/logs/test_executor.log' }
       },
       {
-        id: 'report_generator_1',
+        creation_id: 'report_generator_1',
         type: 'report_generator',
         redis: { url: redisUrl },
         logging: { level: 'info', file: './data/logs/report_generator.log' }
       },
       {
-        id: 'test_optimizer_1',
+        creation_id: 'test_optimizer_1',
         type: 'test_optimizer',
         redis: { url: redisUrl },
         logging: { level: 'info', file: './data/logs/test_optimizer.log' }
       },
       {
-        id: 'context_manager_1',
+        creation_id: 'context_manager_1',
         type: 'context_manager',
         redis: { url: redisUrl },
         logging: { level: 'info', file: './data/logs/context_manager.log' }
       },
       {
-        id: 'logger_1',
+        creation_id: 'logger_1',
         type: 'logger',
         redis: { url: redisUrl },
         logging: { level: 'info', file: './data/logs/logger.log' }
@@ -79,7 +80,7 @@ export class AgentManager {
       }
 
       await agent.start();
-      this.agents.set(config.id, agent);
+  this.agents.set(config.creation_id, agent);
     }
 
     console.log(`Started ${this.agents.size} agents`);

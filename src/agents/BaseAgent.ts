@@ -1,4 +1,7 @@
+
 import { createClient } from 'redis';
+import { AgentConfig, AgentMessage, AgentType } from '../types/index.js';
+
 export interface Agent {
   start(): Promise<void>;
   stop(): Promise<void>;
@@ -6,6 +9,7 @@ export interface Agent {
 
 export abstract class BaseAgent implements Agent {
   // Concrete method for message dispatch from Redis
+
   async processMessage(message: AgentMessage): Promise<void> {
     await this.handleMessage(message);
   }
@@ -21,10 +25,10 @@ export abstract class BaseAgent implements Agent {
   }
 
   async start(): Promise<void> {
-  const { commandClient, subscriber } = await this.initializeRedis();
-  this.redis = commandClient;
-  this.subscriber = subscriber;
-  await this.initialize();
+    const { commandClient, subscriber } = await this.initializeRedis();
+    this.redis = commandClient;
+    this.subscriber = subscriber;
+    await this.initialize();
   }
 
   async stop(): Promise<void> {
@@ -43,7 +47,7 @@ export abstract class BaseAgent implements Agent {
     await subscriber.connect();
 
     // Subscribe to this agent's channel
-    await subscriber.subscribe(this.config.id, async (message: string) => {
+    await subscriber.subscribe(this.config.creation_id, async (message: string) => {
       try {
         const parsed: AgentMessage = JSON.parse(message);
         await this.processMessage(parsed);
@@ -69,9 +73,9 @@ export abstract class BaseAgent implements Agent {
   protected async sendMessage(target: string, type: string, payload: any): Promise<void> {
     if (!this.redis) throw new Error('Redis not initialized');
     const message: AgentMessage = {
-      id: crypto.randomUUID(),
+      creation_id: this.config.creation_id,
       type,
-      source: this.config.id,
+      source: this.config.creation_id,
       target,
       payload,
       timestamp: new Date()
@@ -80,46 +84,4 @@ export abstract class BaseAgent implements Agent {
   }
 }
 
-export interface AgentConfig {
-  id: string;
-  type: AgentType;
-  redis: {
-    url: string;
-  };
-  logging: {
-    level: string;
-    file: string;
-  };
-}
-
-export type AgentType = 'test_writer' | 'test_executor' | 'report_generator' | 
-                       'test_optimizer' | 'context_manager' | 'logger';
-
-export interface AgentMessage {
-  id: string;
-  type: string;
-  source: string;
-  target: string;
-  payload: any;
-  timestamp: Date;
-}
-
-export interface TestCase {
-  id: string;
-  name: string;
-  description: string;
-  type: 'functional' | 'accessibility' | 'performance';
-  targetUrl: string;
-  playwrightCode: string;
-  createdAt: Date;
-}
-
-export interface TestExecution {
-  id: string;
-  testCaseId: string;
-  status: 'queued' | 'running' | 'passed' | 'failed';
-  startTime: Date;
-  endTime?: Date;
-  result?: any;
-  artifacts: string[];
-}
+// Types are now imported from ../types/index.js

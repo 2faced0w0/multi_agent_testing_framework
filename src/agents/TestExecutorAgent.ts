@@ -1,5 +1,5 @@
-import { BaseAgent, AgentConfig, AgentMessage } from './BaseAgent.js';
-import { AgentMessage as AgentMessageType } from '../types/index.js';
+import { BaseAgent } from './BaseAgent.js';
+import { AgentConfig, AgentMessage } from '../types/index.js';
 import { chromium, Browser, Page } from 'playwright';
 import { DatabaseManager } from '../database/DatabaseManager.js';
 import { v4 as uuid } from 'uuid';
@@ -17,7 +17,7 @@ export class TestExecutorAgent extends BaseAgent {
   }
 
   // Handles incoming messages and delegates to processMessage
-  protected async handleMessage(message: AgentMessageType): Promise<void> {
+  protected async handleMessage(message: AgentMessage): Promise<void> {
     await this.processMessage(message);
   }
 
@@ -59,7 +59,7 @@ export class TestExecutorAgent extends BaseAgent {
     });
   }
 
-  public async processMessage(message: AgentMessageType): Promise<void> {
+  public async processMessage(message: AgentMessage): Promise<void> {
     switch (message.type) {
       case 'EXECUTE_TEST':
         await this.handleExecuteTest(message);
@@ -74,23 +74,23 @@ export class TestExecutorAgent extends BaseAgent {
     }
   }
 
-  private async handleExecuteTest(message: AgentMessageType): Promise<void> {
-    const { testCaseId } = message.payload;
+  private async handleExecuteTest(message: AgentMessage): Promise<void> {
+  const { creation_id } = message.payload;
 
     try {
-      console.log(`Executing test: ${testCaseId}`);
+      console.log(`Executing test: ${creation_id}`);
       await this.sendMessage('logger_1', 'LOG', {
         level: 'info',
-        message: `Executing test: ${testCaseId}`,
-        data: { testCaseId }
+        message: `Executing test: ${creation_id}`,
+        data: { creation_id }
       });
 
-      let testCase = await this.getData(`testcase:${testCaseId}`);
+      let testCase = await this.getData(`testcase:${creation_id}`);
       if (!testCase && this.db) {
-        const dbCase = this.db.getTestCase(testCaseId);
+        const dbCase = this.db.getTestCase(creation_id);
         if (dbCase) {
           testCase = {
-            id: dbCase.id,
+            creation_id: dbCase.creation_id,
             name: dbCase.name,
             description: dbCase.description,
             type: dbCase.type,
@@ -101,12 +101,12 @@ export class TestExecutorAgent extends BaseAgent {
         }
       }
       if (!testCase) {
-        throw new Error(`Test case not found: ${testCaseId}`);
+        throw new Error(`Test case not found: ${creation_id}`);
       }
 
       const execution = {
-        id: uuid(),
-        testCaseId,
+        creation_id: uuid(),
+        testCaseCreationId: creation_id,
         status: 'running',
         startTime: new Date(),
         endTime: null as Date | null,
@@ -114,21 +114,21 @@ export class TestExecutorAgent extends BaseAgent {
         artifacts: [] as string[]
       };
 
-        await this.storeData(`execution:${execution.id}`, execution);
-        // Store initial execution record in DB
-        if (this.db && this.db.createTestExecution) {
-          this.db.createTestExecution({
-            id: execution.id,
-            testCaseId: execution.testCaseId,
-            status: execution.status,
-            startTime: execution.startTime,
-            endTime: execution.endTime,
-            result: execution.result,
-            artifacts: execution.artifacts
-          });
-        }
+      await this.storeData(`execution:${execution.creation_id}`, execution);
+      // Store initial execution record in DB
+      if (this.db && this.db.createTestExecution) {
+        this.db.createTestExecution({
+          creation_id: execution.creation_id,
+          testCaseCreationId: execution.testCaseCreationId,
+          status: execution.status,
+          startTime: execution.startTime,
+          endTime: execution.endTime,
+          result: execution.result,
+          artifacts: execution.artifacts
+        });
+      }
 
-      const result = await this.executeTest(testCase, execution.id);
+      const result = await this.executeTest(testCase, execution.creation_id);
 
       execution.status = result.success ? 'passed' : 'failed';
       execution.endTime = new Date();
@@ -137,16 +137,16 @@ export class TestExecutorAgent extends BaseAgent {
         execution.artifacts.push(result.screenshot);
       }
 
-        await this.storeData(`execution:${execution.id}`, execution);
-        // Update execution record in DB
-        if (this.db && this.db.updateTestExecution) {
-          this.db.updateTestExecution(execution.id, {
-            status: execution.status,
-            end_time: execution.endTime ? execution.endTime.toISOString() : null,
-            result: JSON.stringify(execution.result || {}),
-            artifacts: JSON.stringify(execution.artifacts || [])
-          });
-        }
+      await this.storeData(`execution:${execution.creation_id}`, execution);
+      // Update execution record in DB
+      if (this.db && this.db.updateTestExecution) {
+        this.db.updateTestExecution(execution.creation_id, {
+          status: execution.status,
+          end_time: execution.endTime ? execution.endTime.toISOString() : null,
+          result: JSON.stringify(execution.result || {}),
+          artifacts: JSON.stringify(execution.artifacts || [])
+        });
+      }
 
       await this.sendMessage(message.source, 'TEST_EXECUTED', {
         execution,
@@ -154,7 +154,7 @@ export class TestExecutorAgent extends BaseAgent {
       });
 
       await this.sendMessage('report_generator', 'GENERATE_REPORT', {
-        executionId: execution.id
+        executionId: execution.creation_id
       });
 
     } catch (error: unknown) {
@@ -209,7 +209,7 @@ export class TestExecutorAgent extends BaseAgent {
   // Sanitize URL for filename
   const urlPart = (testCase.targetUrl || '').replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9]/g, '_').slice(0, 40);
   const typePart = (testCase.type || 'test').replace(/[^a-zA-Z0-9]/g, '_');
-  const testFileName = `${typePart}_${urlPart}_${testCase.id}.ts`;
+  const testFileName = `${typePart}_${urlPart}_${testCase.id}.spec.ts`;
   const testFilePath = path.join(testsDir, testFileName);
   await fs.promises.writeFile(testFilePath, testCase.playwrightCode, 'utf-8');
 

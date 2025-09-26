@@ -8,24 +8,43 @@ import path from 'path';
 export class CodeWatcher {
   // Validate Playwright test code using regex and basic heuristics
   static validateAndFixTestCode(code: string): string {
-    let fixedCode = code;
-    // Ensure import statement exists
-    if (!/import\s+\{\s*test,\s*expect\s*\}\s+from\s+'@playwright\/test';/.test(fixedCode)) {
+    let fixedCode = code.trim();
+
+  // Remove code block markers and multi-line comment wrappers
+  // Remove triple backticks and language markers at start/end
+  fixedCode = fixedCode.replace(/^```[a-zA-Z]*\s*/m, '');
+  fixedCode = fixedCode.replace(/```\s*$/m, '');
+  // Remove multi-line comment wrappers if present
+  fixedCode = fixedCode.replace(/^\/\*+\s*([\s\S]*?)\s*\*+\//m, '$1');
+  // Remove any leading/trailing whitespace again
+  fixedCode = fixedCode.trim();
+
+    // Ensure import statement exists (robust for whitespace and semicolon)
+    if (!/import\s*\{\s*test\s*,\s*expect\s*\}\s*from\s*['"]@playwright\/test['"];?/.test(fixedCode)) {
       fixedCode = `import { test, expect } from '@playwright/test';\n` + fixedCode;
     }
+
     // Ensure at least one test() block exists
     if (!/test\s*\(/.test(fixedCode)) {
-      // Try to wrap code in a test block
       fixedCode += `\n\ntest('auto generated', async ({ page }) => {\n  // TODO: Insert steps here\n});\n`;
     }
+
     // Fix common syntax errors (unclosed braces, missing async, etc.)
-    // Add more regex-based fixes as needed
     // Example: Ensure all test blocks are async
     fixedCode = fixedCode.replace(/test\s*\(([^)]*)\)\s*=>\s*{/, "test($1, async ({ page }) => {");
-    // Remove export statements if present
-    fixedCode = fixedCode.replace(/export\s+(default|async\s+function\s+run)[^{]*{[\s\S]*?}/g, '');
-    // Ensure file ends with a newline
-    if (!fixedCode.endsWith('\n')) fixedCode += '\n';
+
+    // Fix duplicate async ({ page }) parameters in test declaration
+    fixedCode = fixedCode.replace(/test\s*\(\s*(['\"].*?['\"],\s*)?async \(\{ page \}\),?\s*async \(\{ page \}\)\s*=>/g, 'test($1async ({ page }) =>');
+
+    // Remove export statements if present (robust for multiline)
+    fixedCode = fixedCode.replace(/export\s+(default|async\s+function\s+run)[^{]*{[\s\S]*?}/gm, '');
+
+    // Remove any accidental trailing code block markers
+    fixedCode = fixedCode.replace(/```+$/gm, '');
+
+    // Ensure file ends with a single newline
+    fixedCode = fixedCode.replace(/\s+$/g, '') + '\n';
+
     return fixedCode;
   }
 
